@@ -93,7 +93,7 @@ async function agregarServicio() {
   const payload = { tipoServicio: selectedServiceCode };
 
   try {
-    await apiFetch(`${APP.ENDPOINTS.ADD_SERVICE}/${reservationId}`, {
+    await apiFetch(APP.ENDPOINTS.ADD_SERVICE(reservationId), {
       method: 'POST',
       body:   JSON.stringify(payload),
     });

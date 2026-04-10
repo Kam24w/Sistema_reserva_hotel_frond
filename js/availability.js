@@ -33,11 +33,16 @@ async function loadDisponibilidad() {
 function renderRooms(rooms) {
   const grid      = document.getElementById('rooms-grid');
   const typeFilter = document.getElementById('filter-tipo').value;
-  const filtered  = typeFilter ? rooms.filter(r => r.tipo === typeFilter) : rooms;
+
+  // Handle both 'tipo' and 'type'
+  const filtered = typeFilter
+    ? rooms.filter(r => (r.type || r.tipo) === typeFilter)
+    : rooms;
 
   updateStats(filtered);
 
-  const availableCount = filtered.filter(r => r.disponible).length;
+  // Handle both 'available' and 'disponible'
+  const availableCount = filtered.filter(r => (r.available !== undefined ? r.available : r.disponible)).length;
   document.getElementById('badge-disp').textContent = `${availableCount} disponibles`;
 
   if (filtered.length === 0) {
@@ -54,21 +59,27 @@ function renderRooms(rooms) {
  * @returns {string} HTML string
  */
 function buildRoomCard(room) {
-  const statusClass  = room.disponible ? 'free'     : 'busy';
-  const cardClass    = room.disponible ? ''          : 'occupied';
-  const clickHandler = room.disponible ? `onclick="selectRoom(${room.numero})"` : '';
-  const guestLabel   = `Hasta ${room.capacidad} huésped${room.capacidad > 1 ? 'es' : ''}`;
+  const isAvailable = room.available !== undefined ? room.available : room.disponible;
+  const roomNum     = room.number || room.numero;
+  const roomType    = room.type   || room.tipo;
+  const roomPrice   = room.pricePerNight || room.precioPorNoche || room.precio;
+
+  const statusClass  = isAvailable ? 'free'     : 'busy';
+  const cardClass    = isAvailable ? ''          : 'occupied';
+  const clickHandler = isAvailable ? `onclick="selectRoom(${roomNum})"` : '';
+  const guestLabel   = `Hasta ${room.capacidad || room.capacity || 2} huésped${(room.capacidad || room.capacity) > 1 ? 'es' : ''}`;
 
   return `
     <div class="room-card ${cardClass}" ${clickHandler}>
       <div class="room-status ${statusClass}"></div>
-      <div class="room-number">${room.numero}</div>
-      <div class="room-type">${room.tipo}</div>
-      <div class="room-price">$${room.precioPorNoche}/noche</div>
+      <div class="room-number">${roomNum}</div>
+      <div class="room-type">${roomType}</div>
+      <div class="room-price">$${roomPrice}/noche</div>
       <div class="room-capacity">${guestLabel}</div>
     </div>
   `;
 }
+
 
 // ── Stats ──────────────────────────────────────────────────────
 

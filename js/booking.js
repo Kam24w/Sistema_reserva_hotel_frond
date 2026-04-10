@@ -48,7 +48,12 @@ function populateRoomSelect(rooms) {
   select.innerHTML =
     '<option value="">Seleccionar habitación...</option>' +
     rooms
-      .map(r => `<option value="${r.numero}">#${r.numero} — ${r.tipo} ($${r.precioPorNoche}/noche)</option>`)
+      .map(r => {
+        const num   = r.number || r.numero;
+        const type  = r.type   || r.tipo;
+        const price = r.pricePerNight || r.precioPorNoche || r.precio;
+        return `<option value="${num}">#${num} — ${type} ($${price}/noche)</option>`;
+      })
       .join('');
 }
 
@@ -95,18 +100,20 @@ function calculatePricePreview() {
 // ── Create Reservation ─────────────────────────────────────────
 
 /**
- * Submits a new reservation via POST /api/hotel/reservar.
+ * Submits a new reservation via POST /api/reservations.
  * Saves the result to the local session cache.
  */
 async function crearReserva() {
+  // Using English keys as standard for the new backend
   const payload = {
-    nombreHuesped:    document.getElementById('r-nombre').value.trim(),
-    numeroHabitacion: parseInt(document.getElementById('r-habitacion').value),
-    fechaCheckin:     document.getElementById('r-checkin').value,
-    fechaCheckout:    document.getElementById('r-checkout').value,
+    guestName:      document.getElementById('r-nombre').value.trim(),
+    roomNumber:     parseInt(document.getElementById('r-habitacion').value),
+    checkinDate:    document.getElementById('r-checkin').value,
+    checkoutDate:   document.getElementById('r-checkout').value,
   };
 
-  if (!payload.nombreHuesped || !payload.numeroHabitacion || !payload.fechaCheckin || !payload.fechaCheckout) {
+  // Fallback for older backends (sending both if needed can be messy, so let's use English primarily per instructions)
+  if (!payload.guestName || !payload.roomNumber || !payload.checkinDate || !payload.checkoutDate) {
     showToast('Campos incompletos', 'Completa todos los campos antes de confirmar');
     return;
   }
@@ -117,16 +124,18 @@ async function crearReserva() {
       body:   JSON.stringify(payload),
     });
     reservationsCache.push(data);
-    showToast('¡Reserva creada!', `ID: ${data.id} — ${payload.nombreHuesped}`);
+    showToast('¡Reserva creada!', `ID: ${data.id} — ${payload.guestName}`);
   } catch {
+    // Demo fallback payload keys mapping
     const mockReservation = {
       id:     Math.floor(Math.random() * 900) + 100,
-      estado: 'PENDIENTE',
+      status: 'PENDIENTE',
       ...payload,
     };
     reservationsCache.push(mockReservation);
     showToast('Reserva simulada', `ID: ${mockReservation.id} (modo demo)`);
   }
+
 
   resetBookingForm();
 }

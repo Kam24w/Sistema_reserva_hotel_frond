@@ -19,7 +19,7 @@ async function loadFactura() {
   container.innerHTML = buildLoadingHTML('Generando factura...');
 
   try {
-    const data = await apiFetch(`${APP.ENDPOINTS.INVOICE}/${id}`);
+    const data = await apiFetch(APP.ENDPOINTS.INVOICE(id));
     renderInvoice(data);
   } catch {
     // Try to build from cached session data
@@ -42,8 +42,20 @@ async function loadFactura() {
 function renderInvoice(invoice) {
   const container     = document.getElementById('factura-container');
   const invoiceId     = invoice.id || document.getElementById('fact-id').value;
-  const serviceRows   = buildServiceRows(invoice.serviciosAdicionales || []);
-  const seasonLabel   = invoice.temporada === 'ALTA' ? 'Alta (×1.5)' : 'Baja (×1.0)';
+
+  const guestName = invoice.guestName || invoice.nombreHuesped || 'Huésped';
+  const roomNum   = invoice.roomNumber || invoice.numeroHabitacion;
+  const inDate    = invoice.checkinDate || invoice.fechaCheckin;
+  const outDate   = invoice.checkoutDate || invoice.fechaCheckout;
+
+  const serviceRows   = buildServiceRows(invoice.additionalServices || invoice.serviciosAdicionales || []);
+  const season        = invoice.season || invoice.temporada;
+  const seasonLabel   = season === 'ALTA' ? 'Alta (×1.5)' : 'Baja (×1.0)';
+
+  const baseRate = invoice.baseRate || invoice.tarifaBase;
+  const nights   = invoice.nights   || invoice.noches;
+  const subtotal = invoice.subtotal;
+  const total    = invoice.total;
 
   container.innerHTML = `
     <div class="invoice-card">
@@ -57,20 +69,20 @@ function renderInvoice(invoice) {
       </div>
 
       <div class="invoice-guest">
-        <div style="font-weight: 600;">${invoice.nombreHuesped}</div>
+        <div style="font-weight: 600;">${guestName}</div>
         <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-          Hab. ${invoice.numeroHabitacion} &nbsp;·&nbsp; ${invoice.fechaCheckin} → ${invoice.fechaCheckout}
+          Hab. ${roomNum} &nbsp;·&nbsp; ${inDate} → ${outDate}
         </div>
       </div>
 
       <table class="invoice-table">
         <tr>
           <td>Tarifa base / noche</td>
-          <td>$${formatCurrency(invoice.tarifaBase)}</td>
+          <td>$${formatCurrency(baseRate)}</td>
         </tr>
         <tr>
           <td>Noches</td>
-          <td>${invoice.noches}</td>
+          <td>${nights}</td>
         </tr>
         <tr>
           <td>Temporada</td>
@@ -78,27 +90,28 @@ function renderInvoice(invoice) {
         </tr>
         <tr>
           <td>Subtotal habitación</td>
-          <td>$${formatCurrency(invoice.subtotal)}</td>
+          <td>$${formatCurrency(subtotal)}</td>
         </tr>
         ${serviceRows}
       </table>
 
       <div class="invoice-total">
         <span class="invoice-total-label">Total</span>
-        <span class="invoice-total-amount">$${formatCurrency(invoice.total)}</span>
+        <span class="invoice-total-amount">$${formatCurrency(total)}</span>
       </div>
 
       <div class="access-key">
         <span class="access-key-icon">🔑</span>
         <div>
           <div class="access-key-label">Llave Digital</div>
-          <div class="access-key-value">${invoice.llaveDigital || '—'}</div>
+          <div class="access-key-value">${invoice.digitalKey || invoice.llaveDigital || '—'}</div>
         </div>
       </div>
 
     </div>
   `;
 }
+
 
 // ── Table Builders ─────────────────────────────────────────────
 

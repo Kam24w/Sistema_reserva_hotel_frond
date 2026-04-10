@@ -29,9 +29,13 @@ function loadReservas() {
  * @returns {string} HTML string
  */
 function buildReservationItem(reservation) {
-  const guestName = reservation.nombreHuesped || reservation.nombre || 'Huésped';
-  const status    = reservation.estado || 'PENDIENTE';
-  const detail    = `Hab. ${reservation.numeroHabitacion} · ${reservation.fechaCheckin} → ${reservation.fechaCheckout}`;
+  const guestName = reservation.guestName || reservation.nombreHuesped || reservation.nombre || 'Huésped';
+  const status    = reservation.status    || reservation.estado || 'PENDIENTE';
+  const roomNum   = reservation.roomNumber || reservation.numeroHabitacion;
+  const inDate    = reservation.checkinDate || reservation.fechaCheckin;
+  const outDate   = reservation.checkoutDate || reservation.fechaCheckout;
+
+  const detail    = `Hab. ${roomNum} · ${inDate} → ${outDate}`;
 
   return `
     <div class="reserva-item" id="res-${reservation.id}">
@@ -41,6 +45,7 @@ function buildReservationItem(reservation) {
         <div class="reserva-detail">${detail}</div>
       </div>
       <span class="status-pill ${getStatusCSSClass(status)}">${status}</span>
+
       <div class="reserva-actions">
         <button class="action-btn primary" onclick="doCheckin(${reservation.id})">Check-in</button>
         <button class="action-btn"         onclick="doCheckout(${reservation.id})">Check-out</button>
@@ -71,7 +76,7 @@ function getStatusCSSClass(status) {
  */
 async function doCheckin(id) {
   try {
-    await apiFetch(`${APP.ENDPOINTS.CHECKIN}/${id}`, { method: 'PUT' });
+    await apiFetch(APP.ENDPOINTS.CHECKIN(id), { method: 'PUT' });
     showToast('Check-in realizado', `Reserva #${id}`);
   } catch {
     showToast('Check-in registrado', `ID: ${id} (modo demo)`);
@@ -86,7 +91,7 @@ async function doCheckin(id) {
  */
 async function doCheckout(id) {
   try {
-    await apiFetch(`${APP.ENDPOINTS.CHECKOUT}/${id}`, { method: 'PUT' });
+    await apiFetch(APP.ENDPOINTS.CHECKOUT(id), { method: 'PUT' });
     showToast('Check-out realizado', `Reserva #${id}`);
   } catch {
     showToast('Check-out registrado', `ID: ${id} (modo demo)`);
