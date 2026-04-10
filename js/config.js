@@ -17,15 +17,18 @@ const APP = {
   TOAST_DURATION_MS:  3000,
   ROOM_SELECT_DELAY:  200,             // ms before setting room select after nav
 
-  // API endpoints
+  // API endpoints — match the backend controllers exactly
   ENDPOINTS: {
-    ROOMS:       '/api/hotel/habitaciones',
-    AVAILABLE:   '/api/hotel/disponibilidad',
-    BOOK:        '/api/hotel/reservar',
-    CHECKIN:     '/api/hotel/checkin',
-    CHECKOUT:    '/api/hotel/checkout',
-    INVOICE:     '/api/hotel/factura',
-    SERVICES:    '/api/hotel/servicios/tipos',
-    ADD_SERVICE: '/api/hotel/servicios',
+    // Static paths
+    ROOMS:       '/api/reservations/rooms',
+    AVAILABLE:   '/api/reservations/availability',
+    BOOK:        '/api/reservations',
+    SERVICES:    '/api/reservations/services/types',
+
+    // Dynamic paths — functions that receive the reservation ID
+    CHECKIN:     (id) => `/api/reservations/${id}/check-in`,
+    CHECKOUT:    (id) => `/api/reservations/${id}/check-out`,
+    INVOICE:     (id) => `/api/reservations/${id}/invoice`,
+    ADD_SERVICE: (id) => `/api/reservations/${id}/services`,
   },
 };
