@@ -27,8 +27,6 @@ async function loadHabitacionesSelect() {
     populateRoomSelect(getMockRooms().filter(r => r.disponible));
   }
 
-  document.getElementById('api-url-input').value = apiBaseUrl;
-
   // Attach listeners once (guard with dataset flag to avoid duplicates)
   ['r-checkin', 'r-checkout', 'r-habitacion'].forEach(id => {
     const el = document.getElementById(id);

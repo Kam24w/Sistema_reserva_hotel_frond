@@ -5,8 +5,7 @@
 
 const APP = {
   // API
-  DEFAULT_API_URL:    'http://localhost:8080',
-  STORAGE_KEY_API:    'hotel_api_url',
+  DEFAULT_API_URL:    'https://sistemareservahotelback-production.up.railway.app',
 
   // Business logic
   HIGH_SEASON_MONTHS: [12, 1, 7, 8],   // Dec, Jan, Jul, Aug

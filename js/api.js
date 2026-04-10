@@ -4,18 +4,7 @@
    ============================================================= */
 
 // ── State ─────────────────────────────────────────────────────
-let apiBaseUrl = localStorage.getItem(APP.STORAGE_KEY_API) || APP.DEFAULT_API_URL;
-
-// ── API URL config ─────────────────────────────────────────────
-
-/**
- * Saves the API base URL from the input field and persists it in localStorage.
- */
-function saveApiUrl() {
-  apiBaseUrl = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
-  localStorage.setItem(APP.STORAGE_KEY_API, apiBaseUrl);
-  showToast('URL guardada', apiBaseUrl);
-}
+const apiBaseUrl = APP.DEFAULT_API_URL;
 
 // ── HTTP Helper ────────────────────────────────────────────────
 
