@@ -1,68 +1,55 @@
-/* =============================================
-   app.js — Inicialización y navegación
-   Punto de entrada principal de la aplicación
-   ============================================= */
+/* =============================================================
+   app.js — Application entry point and router
+   Depends on: config.js, api.js, and all page modules
+   ============================================================= */
+
+// ── Router ─────────────────────────────────────────────────────
 
 /**
- * Navega a una página de la aplicación
- * @param {string}  pageId  - ID de la página destino (sin prefijo 'page-')
- * @param {Element} tabEl   - Elemento <button> del tab activo
+ * Navigates to an application page and activates its nav tab.
+ * @param {string}  pageId - Page ID (without 'page-' prefix)
+ * @param {Element} tabEl  - The <button> nav tab element to activate
  */
 function goTo(pageId, tabEl) {
-  // Ocultar todas las páginas
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-
-  // Desactivar todos los tabs
+  document.querySelectorAll('.page').forEach(p  => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
-  // Activar página y tab seleccionados
-  document.getElementById('page-' + pageId).classList.add('active');
+  document.getElementById(`page-${pageId}`).classList.add('active');
   if (tabEl) tabEl.classList.add('active');
 
-  // Acciones específicas de cada página al navegar
-  switch (pageId) {
-    case 'disponibilidad':
-      loadDisponibilidad();
-      break;
-    case 'reservar':
-      loadHabitacionesSelect();
-      break;
-    case 'gestion':
-      loadReservas();
-      break;
-    case 'servicios':
-      loadServicios();
-      break;
-    case 'factura':
-      // Sin acción automática — el usuario ingresa el ID
-      break;
-  }
+  // Trigger page-specific load actions
+  const PAGE_ACTIONS = {
+    disponibilidad: loadDisponibilidad,
+    reservar:       loadHabitacionesSelect,
+    gestion:        loadReservas,
+    servicios:      loadServicios,
+    factura:        () => {},  // No auto-load — user must enter an ID
+  };
+
+  PAGE_ACTIONS[pageId]?.();
 }
 
-/**
- * Inicializa la aplicación al cargar el DOM
- */
+// ── Initialization ─────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Fechas por defecto: hoy y hoy + 3 días
-  const hoy       = new Date().toISOString().split('T')[0];
-  const en3dias   = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+  // Default dates: today and 3 days from now
+  const today        = new Date().toISOString().split('T')[0];
+  const inThreeDays  = new Date(Date.now() + 3 * APP.MS_PER_DAY).toISOString().split('T')[0];
 
-  // Filtros de disponibilidad
-  const filtCheckin  = document.getElementById('filter-checkin');
-  const filtCheckout = document.getElementById('filter-checkout');
-  if (filtCheckin)  filtCheckin.value  = hoy;
-  if (filtCheckout) filtCheckout.value = en3dias;
+  const fields = [
+    { id: 'filter-checkin',  value: today       },
+    { id: 'filter-checkout', value: inThreeDays },
+    { id: 'r-checkin',       value: today       },
+    { id: 'r-checkout',      value: inThreeDays },
+  ];
 
-  // Formulario de reserva
-  const rCheckin  = document.getElementById('r-checkin');
-  const rCheckout = document.getElementById('r-checkout');
-  if (rCheckin)  rCheckin.value  = hoy;
-  if (rCheckout) rCheckout.value = en3dias;
+  fields.forEach(({ id, value }) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
 
-  // Cargar página inicial
   loadDisponibilidad();
 
-  console.log('%c Hotel Facade Frontend ', 'background:#1C1C1C;color:#C9A84C;font-size:14px;padding:4px 8px;border-radius:4px;');
-  console.log('API Base URL:', API_BASE);
-  console.log('Cambia la URL en "Nueva Reserva" → campo API URL');
+  console.log('%c Facade Resort — Frontend ', 'background:#0d1117;color:#d4a953;font-size:14px;padding:4px 8px;border-radius:4px;');
+  console.log('API Base URL:', apiBaseUrl);
 });

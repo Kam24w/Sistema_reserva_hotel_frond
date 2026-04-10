@@ -1,69 +1,79 @@
-/* =============================================
-   mock.js — Datos simulados (modo demo)
-   Usados cuando el backend no está disponible
-   ============================================= */
+/* =============================================================
+   mock.js — Simulated data for offline / demo mode
+   Used when the backend is unavailable.
+   Depends on: config.js
+   ============================================================= */
+
+// ── Room Type Definitions ──────────────────────────────────────
+
+const ROOM_TYPES = [
+  { type: 'SENCILLA', pricePerNight: 80,  capacity: 1 },
+  { type: 'DOBLE',    pricePerNight: 130, capacity: 2 },
+  { type: 'SUITE',    pricePerNight: 250, capacity: 4 },
+];
 
 /**
- * Genera las 15 habitaciones predefinidas del sistema:
- * 6 sencillas (101-106), 6 dobles (201-206), 3 suites (301-303)
- * @returns {Array} Lista de habitaciones con disponibilidad simulada
+ * Maps each room number to its type index in ROOM_TYPES.
+ * Layout: 101-106 → SENCILLA, 201-206 → DOBLE, 301-303 → SUITE
  */
-function mockRooms() {
-  const tipos = [
-    { tipo: 'SENCILLA', precio: 80,  capacidad: 1 },
-    { tipo: 'DOBLE',    precio: 130, capacidad: 2 },
-    { tipo: 'SUITE',    precio: 250, capacidad: 4 },
-  ];
+const ROOM_NUMBERS     = [101, 102, 103, 104, 105, 106, 201, 202, 203, 204, 205, 206, 301, 302, 303];
+const ROOM_TYPE_INDEX  = [  0,   0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   1,   2,   2,   2];
+const AVAILABLE_ROOMS  = [101, 104, 201, 203, 206, 302];
 
-  const numeros     = [101, 102, 103, 104, 105, 106, 201, 202, 203, 204, 205, 206, 301, 302, 303];
-  const asignacion  = [  0,   0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   1,   2,   2,   2];
-  const disponibles = [101, 104, 201, 203, 206, 302];
+// ── Mock Data Generators ───────────────────────────────────────
 
-  return numeros.map((num, i) => ({
-    numero:         num,
-    tipo:           tipos[asignacion[i]].tipo,
-    precioPorNoche: tipos[asignacion[i]].precio,
-    capacidad:      tipos[asignacion[i]].capacidad,
-    disponible:     disponibles.includes(num),
-  }));
+/**
+ * Generates the full list of hotel rooms with simulated availability.
+ * @returns {Array<object>} Room list
+ */
+function getMockRooms() {
+  return ROOM_NUMBERS.map((number, index) => {
+    const roomType = ROOM_TYPES[ROOM_TYPE_INDEX[index]];
+    return {
+      numero:         number,
+      tipo:           roomType.type,
+      precioPorNoche: roomType.pricePerNight,
+      capacidad:      roomType.capacity,
+      disponible:     AVAILABLE_ROOMS.includes(number),
+    };
+  });
 }
 
 /**
- * Servicios adicionales predefinidos del sistema
- * @returns {Array} Lista de servicios
+ * Returns the predefined list of additional services.
+ * @returns {Array<object>} Service list
  */
-function mockServicios() {
+function getMockServices() {
   return [
-    { codigo: 'SPA',       nombre: 'Spa & Wellness',       precio: 50,  icono: '🧖', desc: 'Masajes y tratamientos relajantes', unidad: 'por sesión' },
-    { codigo: 'DESAYUNO',  nombre: 'Desayuno Buffet',      precio: 15,  icono: '☕', desc: 'Buffet continental incluido',       unidad: 'por día'    },
-    { codigo: 'TRASLADO',  nombre: 'Traslado Aeropuerto',  precio: 30,  icono: '🚐', desc: 'Servicio puerta a puerta',          unidad: 'por trayecto' },
+    { codigo: 'SPA',      nombre: 'Spa & Wellness',      precio: 50,  icono: '🧖', desc: 'Masajes y tratamientos relajantes', unidad: 'por sesión'  },
+    { codigo: 'DESAYUNO', nombre: 'Desayuno Buffet',     precio: 15,  icono: '☕', desc: 'Buffet continental incluido',        unidad: 'por día'     },
+    { codigo: 'TRASLADO', nombre: 'Traslado Aeropuerto', precio: 30,  icono: '🚐', desc: 'Servicio puerta a puerta',           unidad: 'por trayecto'},
   ];
 }
 
 /**
- * Genera una factura simulada para una reserva del cache local
- * @param {object} reserva - Objeto de reserva
- * @returns {object} Estructura de factura simulada
+ * Generates a simulated invoice from a cached reservation.
+ * @param {object} reservation - Reservation object from local cache
+ * @returns {object} Simulated invoice
  */
-function mockFactura(reserva) {
-  const checkin  = new Date(reserva.fechaCheckin);
-  const checkout = new Date(reserva.fechaCheckout);
-  const noches   = Math.max(1, Math.round((checkout - checkin) / 86400000));
-  const mes      = checkin.getMonth() + 1;
-  const esAlta   = [12, 1, 7, 8].includes(mes);
-  const tarifa   = 100;
-  const factor   = esAlta ? 1.5 : 1.0;
-  const subtotal = tarifa * noches * factor;
+function getMockInvoice(reservation) {
+  const checkIn   = new Date(reservation.fechaCheckin);
+  const checkOut  = new Date(reservation.fechaCheckout);
+  const nights    = Math.max(1, Math.round((checkOut - checkIn) / APP.MS_PER_DAY));
+  const isHigh    = isHighSeason(reservation.fechaCheckin);
+  const baseRate  = 100;
+  const factor    = isHigh ? APP.HIGH_SEASON_RATE : APP.LOW_SEASON_RATE;
+  const subtotal  = baseRate * nights * factor;
 
   return {
-    id:                   reserva.id,
-    nombreHuesped:        reserva.nombreHuesped || 'Huésped',
-    numeroHabitacion:     reserva.numeroHabitacion,
-    fechaCheckin:         reserva.fechaCheckin,
-    fechaCheckout:        reserva.fechaCheckout,
-    noches,
-    tarifaBase:           tarifa,
-    temporada:            esAlta ? 'ALTA' : 'BAJA',
+    id:                   reservation.id,
+    nombreHuesped:        reservation.nombreHuesped || 'Huésped',
+    numeroHabitacion:     reservation.numeroHabitacion,
+    fechaCheckin:         reservation.fechaCheckin,
+    fechaCheckout:        reservation.fechaCheckout,
+    noches:               nights,
+    tarifaBase:           baseRate,
+    temporada:            isHigh ? 'ALTA' : 'BAJA',
     subtotal,
     serviciosAdicionales: [],
     total:                subtotal,
@@ -71,12 +81,15 @@ function mockFactura(reserva) {
   };
 }
 
+// ── Season Helpers ─────────────────────────────────────────────
+
 /**
- * Determina si un mes es temporada alta
- * @param {string} fechaStr - Fecha en formato YYYY-MM-DD
+ * Determines if a date falls in the high season.
+ * High season: December, January, July, August.
+ * @param {string} dateStr - Date in YYYY-MM-DD format
  * @returns {boolean}
  */
-function esTemporadaAlta(fechaStr) {
-  const mes = new Date(fechaStr).getMonth() + 1;
-  return [12, 1, 7, 8].includes(mes);
+function isHighSeason(dateStr) {
+  const month = new Date(dateStr).getMonth() + 1;
+  return APP.HIGH_SEASON_MONTHS.includes(month);
 }
